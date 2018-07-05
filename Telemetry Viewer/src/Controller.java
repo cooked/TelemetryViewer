@@ -1,7 +1,10 @@
 import java.awt.Color;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -12,6 +15,9 @@ import javax.swing.JOptionPane;
 
 import com.fazecast.jSerialComm.SerialPort;
 
+import java.io.ByteArrayInputStream;
+
+
 /**
  * Handles all non-GUI logic and manages access to the Model (the data).
  */
@@ -20,6 +26,7 @@ public class Controller {
 	static List<GridChangedListener> gridChangedListeners = new ArrayList<GridChangedListener>();
 	static List<SerialPortListener>   serialPortListeners = new ArrayList<SerialPortListener>();
 	static volatile SerialPort port;
+	static volatile DatagramSocket socket;
 	
 	/**
 	 * @return    The display scaling factor. By default, this is the percentage of 100dpi that the screen uses, rounded to an integer.
@@ -292,11 +299,12 @@ public class Controller {
 		
 		SerialPort[] ports = SerialPort.getCommPorts();
 		
-		String[] names = new String[ports.length + 1];
+		String[] names = new String[ports.length + 2];
 		for(int i = 0; i < ports.length; i++)
 			names[i] = ports[i].getSystemPortName();
 		
-		names[names.length - 1] = "Test";
+		names[names.length - 2] = "Test";
+		names[names.length - 1] = "TestSocket";
 		
 		return names;
 		
@@ -351,8 +359,33 @@ public class Controller {
 			
 			return;
 			
-		}
+		} else if(portName.equals("TestSocket")) {
+
+			// start the socket server on localhost
+			TesterSocket.startSocketServer();
+			socket = TesterSocket.getSocket();
 			
+			// start socket client (transmitter)
+			TesterSocket.populateDataStructure();
+			TesterSocket.startTransmission();
+			
+			Model.sampleRate = sampleRate;
+			Model.packet = null;
+			Model.portName = portName;
+			Model.baudRate = 9600;
+			
+			notifySerialPortListeners(SERIAL_CONNECTION_OPENED);
+			
+			if(parentWindow != null)
+				packet.showDataStructureWindow(parentWindow, true);
+			
+			packet.startReceivingData(TesterSocket.getInputStream());
+			
+			return;
+			
+		}
+		
+		
 		port = SerialPort.getCommPort(portName);
 		port.setBaudRate(baudRate);
 		if(packet instanceof CsvPacket)
