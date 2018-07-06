@@ -28,14 +28,14 @@ public class Main {
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		window.setVisible(true);
 		
-		LogitechSmoothScrolling mouse = new LogitechSmoothScrolling();
+		/*LogitechSmoothScrolling mouse = new LogitechSmoothScrolling();
 		
 		window.addWindowFocusListener(new WindowFocusListener() {
 			@Override public void windowGainedFocus(WindowEvent we) {
 				mouse.enableSmoothScrolling();
 			}
 			@Override public void windowLostFocus(WindowEvent we) { }
-		});
+		});*/
 		
 	}
 

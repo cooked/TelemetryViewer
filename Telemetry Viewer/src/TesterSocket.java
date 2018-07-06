@@ -1,4 +1,6 @@
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.GraphicsEnvironment;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -8,6 +10,9 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import javax.swing.JFrame;
+import javax.swing.UIManager;
+
 public class TesterSocket {
 
 	private static Thread transmitter;
@@ -15,16 +20,17 @@ public class TesterSocket {
 	
 	private static DatagramSocket socket;
 	private static InetAddress address;
-
+	private static int port = 6969;
+	
 	private static DataInputStream dataInStream;
 	
 	public static void startSocketServer() {
 		try {
-			socket = new DatagramSocket();
+			socket = new DatagramSocket(port); // port on localhost
 			address = InetAddress.getByName("localhost");
 			
 			// receive continuously
-			startReceive();
+			//startReceive();
 			
 		} catch (SocketException e) {
 			// TODO Auto-generated catch block
@@ -56,20 +62,22 @@ public class TesterSocket {
 				//https://stackoverflow.com/questions/36067414/datainputstream-over-datagramsocket
 				byte[] buffer = new byte[2048];
 				DatagramPacket dp = new DatagramPacket(buffer, buffer.length);
-				
-				dataInStream = new DataInputStream(new ByteArrayInputStream(dp.getData(), dp.getOffset(), dp.getLength()));
+				dataInStream = new DataInputStream(
+						new ByteArrayInputStream(dp.getData(), dp.getOffset(), dp.getLength()));
 				
 				while(true) {
 
+						
+					
+					
 						try {
 							socket.receive(dp);
+							//dataInStream = /*new DataInputStream(*/
+							//		new ByteArrayInputStream(dp.getData(), dp.getOffset(), dp.getLength());
 							
 							Thread.sleep(1);
 							
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (InterruptedException e) {
+						} catch (IOException | InterruptedException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
@@ -95,28 +103,21 @@ public class TesterSocket {
 		
 		transmitter = new Thread(new Runnable() {
 			@Override public void run() {
-
-				byte[] buf;
+				
+				String msg = "0.001,0.222"+System.lineSeparator();
 				
 				while(true) {
 					
 					try {
 						
-						String msg = Double.toString(Math.random()) + "," + 
-								Double.toString(Math.random()) + System.lineSeparator();
+						byte buf[] = msg.getBytes("UTF-8");
 						
-						buf = msg.getBytes();
-						DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 4445);
-						socket.send(packet);
+						socket.send( 
+								new DatagramPacket(buf, buf.length, address, port));
 						
-						Thread.sleep(1);
-						
-					} catch(InterruptedException e) {
-						
-						// stop and end this thread if we get interrupted
-						return;
-						
-					} catch (IOException e) {
+						Thread.sleep(10);
+					
+					} catch (IOException | InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
@@ -124,7 +125,7 @@ public class TesterSocket {
 				
 			}
 		});
-		transmitter.setPriority(Thread.MAX_PRIORITY);
+		transmitter.setPriority(Thread.NORM_PRIORITY);
 		transmitter.setName("Test Socket Transmitter");
 		transmitter.start();
 		
@@ -166,6 +167,12 @@ public class TesterSocket {
 		name = "Waveform B";
 		color = Color.GREEN;
 		Controller.insertDataset(location, processor, name, color, unit, conversionFactorA, conversionFactorB);
+		
+	}
+	
+	public static void main(String[] args) {
+		
+		
 		
 	}
 

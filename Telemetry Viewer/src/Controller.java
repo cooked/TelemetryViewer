@@ -26,7 +26,7 @@ public class Controller {
 	static List<GridChangedListener> gridChangedListeners = new ArrayList<GridChangedListener>();
 	static List<SerialPortListener>   serialPortListeners = new ArrayList<SerialPortListener>();
 	static volatile SerialPort port;
-	static volatile DatagramSocket socket;
+	//static volatile DatagramSocket socket;
 	
 	/**
 	 * @return    The display scaling factor. By default, this is the percentage of 100dpi that the screen uses, rounded to an integer.
@@ -359,15 +359,17 @@ public class Controller {
 			
 			return;
 			
-		} else if(portName.equals("TestSocket")) {
+		} else if (portName.equals("TestSocket")) {
 
 			// start the socket server on localhost
 			TesterSocket.startSocketServer();
-			socket = TesterSocket.getSocket();
+			//socket = TesterSocket.getSocket();
 			
 			// start socket client (transmitter)
 			TesterSocket.populateDataStructure();
+			TesterSocket.startReceive();
 			TesterSocket.startTransmission();
+			
 			
 			Model.sampleRate = sampleRate;
 			Model.packet = null;

@@ -243,17 +243,21 @@ public class CsvPacket implements Packet {
 					
 					// parse received text
 					try {
-						
+
 						String line = reader.readLine();
-						String[] tokens = line.split(",");
-						// ensure they can all be parsed as floats before populating the datasets
-						for(Dataset dataset : Controller.getAllDatasets())
-							Float.parseFloat(tokens[dataset.location]);
-						for(Dataset dataset : Controller.getAllDatasets())
-							dataset.add(Float.parseFloat(tokens[dataset.location]));
+						//System.out.println("Length: " + Integer.toString(line.length()) );
 						
+							String[] tokens = line.split(",");
+							if(tokens.length>1) {
+								// ensure they can all be parsed as floats before populating the datasets
+								for(Dataset dataset : Controller.getAllDatasets())
+									Float.parseFloat(tokens[dataset.location]);
+								for(Dataset dataset : Controller.getAllDatasets())
+									dataset.add(Float.parseFloat(tokens[dataset.location]));
+							}
+
 					} catch(NumberFormatException | NullPointerException | ArrayIndexOutOfBoundsException e1) {
-						
+
 						System.err.println("A corrupt line was received.");
 						
 					}
