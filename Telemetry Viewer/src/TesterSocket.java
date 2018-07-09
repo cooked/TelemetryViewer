@@ -1,9 +1,11 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GraphicsEnvironment;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -18,20 +20,20 @@ public class TesterSocket {
 	private static Thread transmitter;
 	private static Thread receiver;
 	
-	private static DatagramSocket socket;
+	private static DatagramSocket socketServer;
+	private static DatagramSocket socketClient;
 	private static InetAddress address;
-	private static int port = 6969;
+	private static int port = 9999;
 	
-	private static DataInputStream dataInStream;
+	private static ByteArrayInputStream 	bais;
 	
 	public static void startSocketServer() {
 		try {
-			socket = new DatagramSocket(port); // port on localhost
-			address = InetAddress.getByName("localhost");
+			address = InetAddress.getLocalHost();
 			
-			// receive continuously
-			//startReceive();
-			
+			socketServer = new DatagramSocket(port,address); // port on localhost
+			socketClient = new DatagramSocket(6969);
+
 		} catch (SocketException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -41,43 +43,42 @@ public class TesterSocket {
 		}
 		
 	}
-
-	public static DatagramSocket getSocket() {
-		return socket;
-	}
-
-	public static DataInputStream getInputStream() {
-		return dataInStream;
-	}
 	
 	public void close() {
-		socket.close();
+		//socket.close();
 	}
 
+	public static ByteArrayInputStream getInputStream() {
+		return bais;
+	}
 	
 	public static void startReceive() {
 		receiver = new Thread(new Runnable() {
 			@Override public void run() {
 
 				//https://stackoverflow.com/questions/36067414/datainputstream-over-datagramsocket
-				byte[] buffer = new byte[2048];
-				DatagramPacket dp = new DatagramPacket(buffer, buffer.length);
-				dataInStream = new DataInputStream(
-						new ByteArrayInputStream(dp.getData(), dp.getOffset(), dp.getLength()));
+				byte[] buffer = new byte[256];
+				DatagramPacket			dp 				= new DatagramPacket(buffer, buffer.length);
+				bais = new ByteArrayInputStream(dp.getData(), dp.getOffset(), dp.getLength());
+				//InputStreamReader		isr				= new InputStreamReader(bais);
+				//BufferedReader 			reader 			= new BufferedReader(isr);
 				
 				while(true) {
 
-						
-					
-					
 						try {
-							socket.receive(dp);
+							socketServer.receive(dp);
+							
 							//dataInStream = /*new DataInputStream(*/
 							//		new ByteArrayInputStream(dp.getData(), dp.getOffset(), dp.getLength());
+							//while(reader.ready())
+							//	Thread.sleep(1);
+							//while(reader.ready()) {
+							//	System.out.println(reader.readLine());
+							//}
+							//bais.reset();
+							//Thread.sleep(1);
 							
-							Thread.sleep(1);
-							
-						} catch (IOException | InterruptedException e) {
+						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
@@ -87,7 +88,7 @@ public class TesterSocket {
 			}
 		});
 		
-		receiver.setPriority(Thread.MAX_PRIORITY);
+		//receiver.setPriority(Thread.MAX_PRIORITY);
 		receiver.setName("Test Socket Recv");
 		receiver.start();
 	}
@@ -104,18 +105,20 @@ public class TesterSocket {
 		transmitter = new Thread(new Runnable() {
 			@Override public void run() {
 				
-				String msg = "0.001,0.222"+System.lineSeparator();
+				int counter = 0; 
+				String msg = "";
 				
 				while(true) {
 					
 					try {
+						msg = "0.001," + Integer.toString(counter) + System.lineSeparator();
+						byte[] buf = msg.getBytes();
+			
+						socketClient.send(new DatagramPacket(buf, buf.length, address, port));
 						
-						byte buf[] = msg.getBytes("UTF-8");
+						counter ++;
 						
-						socket.send( 
-								new DatagramPacket(buf, buf.length, address, port));
-						
-						Thread.sleep(10);
+						Thread.sleep(1);
 					
 					} catch (IOException | InterruptedException e) {
 						// TODO Auto-generated catch block
@@ -125,7 +128,7 @@ public class TesterSocket {
 				
 			}
 		});
-		transmitter.setPriority(Thread.NORM_PRIORITY);
+		//transmitter.setPriority(Thread.NORM_PRIORITY);
 		transmitter.setName("Test Socket Transmitter");
 		transmitter.start();
 		
@@ -171,9 +174,13 @@ public class TesterSocket {
 	}
 	
 	public static void main(String[] args) {
+
+		TesterSocket.startSocketServer();
 		
-		
-		
+		TesterSocket.startReceive();
+		TesterSocket.startTransmission();
+
+
 	}
 
 }
